@@ -32,7 +32,7 @@
   const refreshBtn = document.getElementById('refreshBtn');
   const statusDiv = document.getElementById('status');
 
-    refreshBtn.addEventListener('click', async () => {
+  refreshBtn.addEventListener('click', async () => {
     statusDiv.textContent = 'Buscando presión real del mercado...';
 
     let lpi = 50; // base neutral
@@ -52,29 +52,8 @@
       statusDiv.textContent = `Funding: ${funding.toFixed(2)} bp`;
     } catch (e) {
       statusDiv.textContent = 'Funding: Sin datos';
+      lpi = 50; // neutral si falla
     }
-
-    // Dominancia BTC con fallback real hoy (57.3%)
-    let btcDominance = 57.3; // real 18 ene 2026
-    try {
-      const globalResp = await fetch('https://api.coingecko.com/api/v3/global');
-      const globalJson = await globalResp.json();
-      btcDominance = globalJson.data.market_cap_percentage.btc || 57.3;
-    } catch (e) {
-      // fallback
-    }
-
-    let domPoints = 0;
-    if (btcDominance > 60) {
-      domPoints = 10;
-    } else if (btcDominance < 50) {
-      domPoints = -10;
-    }
-
-    lpi += domPoints;
-
-    statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
-
     // Fear & Greed con fallback real hoy (49)
     let fng = 49; // real 18 ene 2026
     try {
@@ -82,7 +61,7 @@
       const fngJson = await fngResp.json();
       fng = parseInt(fngJson.data[0].value) || 49;
     } catch (e) {
-      // fallback
+      // fallback si falla
     }
 
     let fngPoints = 0;
@@ -99,22 +78,21 @@
     lpi += fngPoints;
 
     statusDiv.textContent += ` | Fear & Greed: ${fng}`;
-
-    // Limitar LPI 0-100
+        // Limitar y actualizar medidor
     lpi = Math.max(0, Math.min(100, lpi));
 
-    // Actualizar medidor
     gauge.data.datasets[0].data = [lpi, 100 - lpi];
     gauge.data.datasets[0].backgroundColor = lpi > 50 ? ['#00FF41', '#333'] : ['#FF0041', '#333'];
     gauge.update();
 
-    // Texto centro medidor
-    gauge.options.plugins.centerText = {
-      display: true,
-      text: `${Math.round(lpi)}`,
-      subText: lpi > 70 ? 'COMPRA' : lpi < 30 ? 'VENTA' : 'Neutral'
-    };
+    // Texto centro
+    const centerPlugin = gauge.config.plugins.find(p => p.id === 'centerText');
+    if (centerPlugin) {
+      centerPlugin.text = `${Math.round(lpi)}`;
+      centerPlugin.subText = lpi > 70 ? 'COMPRA' : lpi < 30 ? 'VENTA' : 'Neutral';
+    }
     gauge.update();
 
     statusDiv.textContent += ` | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
   });
+</script>
