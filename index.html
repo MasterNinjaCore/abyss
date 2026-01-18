@@ -48,6 +48,31 @@
 
       lpi = Math.max(0, Math.min(100, lpi));
 
+            // Flujos ETF spot reales (CoinGlass pública)
+      try {
+        const etfResp = await fetch('https://open-api.coinglass.com/public/v2/etf_netflow?interval=24h');
+        const etfJson = await etfResp.json();
+        const btcEtf = etfJson.data.find(d => d.symbol === 'BTC');
+        const flowUsd = btcEtf ? btcEtf.netFlow : 0;
+
+        let etfPoints = 0;
+        if (flowUsd > 500000000) { // inflows fuertes >500M USD
+          etfPoints = 15;
+        } else if (flowUsd < -500000000) { // outflows fuertes
+          etfPoints = -15;
+        } else if (flowUsd > 200000000) {
+          etfPoints = 8;
+        } else if (flowUsd < -200000000) {
+          etfPoints = -8;
+        }
+
+        lpi += etfPoints;
+
+        statusDiv.textContent += ` | ETF Flow: $${(flowUsd / 1000000).toFixed(1)}M`;
+      } catch (e) {
+        statusDiv.textContent += ' | ETF: Sin datos';
+      }
+
       gauge.data.datasets[0].data = [lpi, 100 - lpi];
       gauge.data.datasets[0].backgroundColor = lpi > 50 ? ['#00FF41', '#333'] : ['#FF0041', '#333'];
       gauge.update();
