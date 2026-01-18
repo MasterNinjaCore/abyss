@@ -32,66 +32,89 @@
   const refreshBtn = document.getElementById('refreshBtn');
   const statusDiv = document.getElementById('status');
 
-  refreshBtn.addEventListener('click', async () => {
+    refreshBtn.addEventListener('click', async () => {
     statusDiv.textContent = 'Buscando presión real del mercado...';
+
+    let lpi = 50; // base neutral
+
+    // Funding rate BTC perpetual (Binance, siempre funciona)
     try {
       const response = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
       const data = await response.json();
       const funding = parseFloat(data.lastFundingRate) * 10000; // base points
 
-      let lpi = 50;
-      if (funding > 1) { // longs pagan → presión bajista
+      if (funding > 1) { // longs pagan → bajista
         lpi -= funding * 5;
-      } else if (funding < -1) { // shorts pagan → presión alcista
+      } else if (funding < -1) { // shorts pagan → alcista
         lpi += Math.abs(funding) * 5;
       }
 
-      lpi = Math.max(0, Math.min(100, lpi));
-            // Dominancia BTC real (CoinGecko pública no key)
-           // Dominancia BTC con fallback real hoy (57.3%)
-      let btcDominance = 57.3; // real 18 ene 2026
-      try {
-        const globalResp = await fetch('https://api.coingecko.com/api/v3/global');
-        const globalJson = await globalResp.json();
-        btcDominance = globalJson.data.market_cap_percentage.btc || 57.3;
-      } catch (e) {
-        // fallback si falla
-      }
+      statusDiv.textContent = `Funding: ${funding.toFixed(2)} bp`;
+    } catch (e) {
+      statusDiv.textContent = 'Funding: Sin datos';
+    }
 
-      let domPoints = 0;
-      if (btcDominance > 60) {
-        domPoints = 10;
-      } else if (btcDominance < 50) {
-        domPoints = -10;
-      }
+    // Dominancia BTC con fallback real hoy (57.3%)
+    let btcDominance = 57.3; // real 18 ene 2026
+    try {
+      const globalResp = await fetch('https://api.coingecko.com/api/v3/global');
+      const globalJson = await globalResp.json();
+      btcDominance = globalJson.data.market_cap_percentage.btc || 57.3;
+    } catch (e) {
+      // fallback
+    }
 
-      lpi += domPoints;
+    let domPoints = 0;
+    if (btcDominance > 60) {
+      domPoints = 10;
+    } else if (btcDominance < 50) {
+      domPoints = -10;
+    }
 
-      statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
+    lpi += domPoints;
 
-      // Fear & Greed con fallback real hoy (49 Neutral)
-      let fng = 49; // real 18 ene 2026
-      try {
-        const fngResp = await fetch('https://api.alternative.me/fng/?limit=1');
-        const fngJson = await fngResp.json();
-        fng = parseInt(fngJson.data[0].value) || 49;
-      } catch (e) {
-        // fallback si falla
-      }
+    statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
 
-      let fngPoints = 0;
-      if (fng < 30) {
-        fngPoints = 15;
-      } else if (fng > 80) {
-        fngPoints = -15;
-      } else if (fng < 45) {
-        fngPoints = 8;
-      } else if (fng > 70) {
-        fngPoints = -8;
-      }
+    // Fear & Greed con fallback real hoy (49)
+    let fng = 49; // real 18 ene 2026
+    try {
+      const fngResp = await fetch('https://api.alternative.me/fng/?limit=1');
+      const fngJson = await fngResp.json();
+      fng = parseInt(fngJson.data[0].value) || 49;
+    } catch (e) {
+      // fallback
+    }
 
-      lpi += fngPoints;
+    let fngPoints = 0;
+    if (fng < 30) {
+      fngPoints = 15;
+    } else if (fng > 80) {
+      fngPoints = -15;
+    } else if (fng < 45) {
+      fngPoints = 8;
+    } else if (fng > 70) {
+      fngPoints = -8;
+    }
 
-      statusDiv.textContent += ` | Fear & Greed: ${fng}`;
-      // Fear & Greed real (pública no key)
-      
+    lpi += fngPoints;
+
+    statusDiv.textContent += ` | Fear & Greed: ${fng}`;
+
+    // Limitar LPI 0-100
+    lpi = Math.max(0, Math.min(100, lpi));
+
+    // Actualizar medidor
+    gauge.data.datasets[0].data = [lpi, 100 - lpi];
+    gauge.data.datasets[0].backgroundColor = lpi > 50 ? ['#00FF41', '#333'] : ['#FF0041', '#333'];
+    gauge.update();
+
+    // Texto centro medidor
+    gauge.options.plugins.centerText = {
+      display: true,
+      text: `${Math.round(lpi)}`,
+      subText: lpi > 70 ? 'COMPRA' : lpi < 30 ? 'VENTA' : 'Neutral'
+    };
+    gauge.update();
+
+    statusDiv.textContent += ` | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
+  });
