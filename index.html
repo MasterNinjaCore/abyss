@@ -23,6 +23,28 @@
   <h1>Abyss</h1>
   <h2>Liquidity Pressure Index</h2>
   <canvas id="lpiGauge"></canvas>
+  <div style="margin-top:60px; width:100%; height:400px; background:#111; border-radius:12px; overflow:hidden; box-shadow:0 0 20px rgba(0,255,65,0.1);">
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+  new TradingView.widget({
+    "container_id": "tv_chart",
+    "width": "100%",
+    "height": "100%",
+    "symbol": "BINANCE:BTCUSDT.P",
+    "interval": "60",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "es",
+    "toolbar_bg": "#000",
+    "enable_publishing": false,
+    "allow_symbol_change": true,
+    "studies": ["Volume@tv-basicstudies", "MASD@tv-basicstudies"],
+    "hide_side_toolbar": false
+  });
+  </script>
+  <div id="tv_chart"></div>
+</div>
   <button id="refreshBtn">Actualizar Presión</button>
   <div id="status"></div>
   <footer>Pressure Without Fear</footer>
@@ -131,6 +153,10 @@
       gauge.update();
 
       statusDiv.textContent += ` | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
+        // Auto update every 5 min
+  setInterval(() => {
+    refreshBtn.click();
+  }, 300000); // 5 minutos = 300000 ms
     });
   </script>
 </body>
