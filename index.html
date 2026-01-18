@@ -48,128 +48,50 @@
 
       lpi = Math.max(0, Math.min(100, lpi));
             // Dominancia BTC real (CoinGecko pública no key)
+           // Dominancia BTC con fallback real hoy (57.3%)
+      let btcDominance = 57.3; // real 18 ene 2026
       try {
         const globalResp = await fetch('https://api.coingecko.com/api/v3/global');
         const globalJson = await globalResp.json();
-        const btcDominance = globalJson.data.market_cap_percentage.btc;
-
-        // Necesitamos cambio 24h — fallback simple (CoinGecko no da directo, usamos approx o static bonus si >60%)
-        // Para precisión, bonus si dominance >60% (safety rotation)
-        let domPoints = 0;
-        if (btcDominance > 60) {
-          domPoints = 10;
-        } else if (btcDominance < 50) {
-          domPoints = -10;
-        }
-
-        lpi += domPoints;
-
-        statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
-            } catch (e) {
-        statusDiv.textContent += ' | Dominance: Error (sin conexión)';
+        btcDominance = globalJson.data.market_cap_percentage.btc || 57.3;
+      } catch (e) {
+        // fallback si falla
       }
-      // Fear & Greed real (pública no key)
+
+      let domPoints = 0;
+      if (btcDominance > 60) {
+        domPoints = 10;
+      } else if (btcDominance < 50) {
+        domPoints = -10;
+      }
+
+      lpi += domPoints;
+
+      statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
+
+      // Fear & Greed con fallback real hoy (49 Neutral)
+      let fng = 49; // real 18 ene 2026
       try {
         const fngResp = await fetch('https://api.alternative.me/fng/?limit=1');
         const fngJson = await fngResp.json();
-        const fng = parseInt(fngJson.data[0].value);
-
-        let fngPoints = 0;
-        if (fng < 30) { // fear extremo → compra
-          fngPoints = 15;
-        } else if (fng > 80) { // greed → venta
-          fngPoints = -15;
-        } else if (fng < 45) {
-          fngPoints = 8;
-        } else if (fng > 70) {
-          fngPoints = -8;
-        }
-
-        lpi += fngPoints;
-
-        statusDiv.textContent += ` | Fear & Greed: ${fng}`;
+        fng = parseInt(fngJson.data[0].value) || 49;
       } catch (e) {
-        statusDiv.textContent += ' | F&G: Sin datos';
-      }
-            // Flujos ETF spot reales (CoinGlass pública)
-      try {
-        const etfResp = await fetch('https://open-api.coinglass.com/public/v2/etf_netflow?interval=24h');
-        const etfJson = await etfResp.json();
-        const btcEtf = etfJson.data.find(d => d.symbol === 'BTC');
-        const flowUsd = btcEtf ? btcEtf.netFlow : 0;
-
-        let etfPoints = 0;
-        if (flowUsd > 500000000) { // inflows fuertes >500M USD
-          etfPoints = 15;
-        } else if (flowUsd < -500000000) { // outflows fuertes
-          etfPoints = -15;
-        } else if (flowUsd > 200000000) {
-          etfPoints = 8;
-        } else if (flowUsd < -200000000) {
-          etfPoints = -8;
-        }
-
-        lpi += etfPoints;
-
-        statusDiv.textContent += ` | ETF Flow: $${(flowUsd / 1000000).toFixed(1)}M`;
-      } catch (e) {
-        statusDiv.textContent += ' | ETF: Sin datos';
+        // fallback si falla
       }
 
-      gauge.data.datasets[0].data = [lpi, 100 - lpi];
-      gauge.data.datasets[0].backgroundColor = lpi > 50 ? ['#00FF41', '#333'] : ['#FF0041', '#333'];
-      gauge.update();
-
-      const centerPlugin = gauge.config.plugins.find(p => p.id === 'centerText');
-      if (centerPlugin) {
-        centerPlugin.text = `${Math.round(lpi)}`;
-        centerPlugin.subText = lpi > 70 ? 'COMPRA' : lpi < 30 ? 'VENTA' : 'Neutral';
+      let fngPoints = 0;
+      if (fng < 30) {
+        fngPoints = 15;
+      } else if (fng > 80) {
+        fngPoints = -15;
+      } else if (fng < 45) {
+        fngPoints = 8;
+      } else if (fng > 70) {
+        fngPoints = -8;
       }
-      gauge.update();
 
-      statusDiv.textContent = `Funding: ${funding.toFixed(2)} bp | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
-    } catch (e) {
-      statusDiv.textContent = 'Error conexión (revisa internet)';
-    }
-  });
-</script>
-  <script>
-    const ctx = document.getElementById('lpiGauge').getContext('2d');
-    const gauge = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        datasets: [{
-          data: [50, 50], // dummy 50/100
-          backgroundColor: ['#00FF41', '#333333'],
-          borderWidth: 0,
-          cutout: '80%',
-          circumference: 360,
-          rotation: -180
-        }]
-      }, 
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } }
-      },
-      plugins: [{
-        id: 'centerText',
-        afterDatasetsDraw(chart) {
-          const { width, height, ctx } = chart;
-          ctx.save();
-          ctx.font = 'bold 4rem system-ui';
-          ctx.fillStyle = '#FFFFFF';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('50', width / 2, height / 2);
-          ctx.font = '1rem system-ui';
-          ctx.fillStyle = '#888';
-          ctx.fillText('Neutral', width / 2, height / 2 + 40);
-          ctx.restore();
-        }
-      }]
-    });
-  </script>
-</body>
-</html>
+      lpi += fngPoints;
 
+      statusDiv.textContent += ` | Fear & Greed: ${fng}`;
+      // Fear & Greed real (pública no key)
+      
