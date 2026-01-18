@@ -65,10 +65,32 @@
         lpi += domPoints;
 
         statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
-      } catch (e) {
-        statusDiv.textContent += ' | Dominance: Sin datos';
+            } catch (e) {
+        statusDiv.textContent += ' | Dominance: Error (sin conexión)';
       }
+      // Fear & Greed real (pública no key)
+      try {
+        const fngResp = await fetch('https://api.alternative.me/fng/?limit=1');
+        const fngJson = await fngResp.json();
+        const fng = parseInt(fngJson.data[0].value);
 
+        let fngPoints = 0;
+        if (fng < 30) { // fear extremo → compra
+          fngPoints = 15;
+        } else if (fng > 80) { // greed → venta
+          fngPoints = -15;
+        } else if (fng < 45) {
+          fngPoints = 8;
+        } else if (fng > 70) {
+          fngPoints = -8;
+        }
+
+        lpi += fngPoints;
+
+        statusDiv.textContent += ` | Fear & Greed: ${fng}`;
+      } catch (e) {
+        statusDiv.textContent += ' | F&G: Sin datos';
+      }
             // Flujos ETF spot reales (CoinGlass pública)
       try {
         const etfResp = await fetch('https://open-api.coinglass.com/public/v2/etf_netflow?interval=24h');
