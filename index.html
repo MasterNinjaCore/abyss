@@ -31,9 +31,9 @@
   <button id="refreshBtn">Actualizar Presión</button>
   <div id="status"></div>
 
-  <!-- Button open TradingView perpetual dark full interactive (reliable mobile, no load fail) -->
+  <!-- Button open TradingView perpetual dark full interactive -->
   <div class="chart-button">
-    <button onclick="window.open('https://www.tradingview.com/chart/?symbol=BINANCE:BTCUSDT.P&interval=60&theme=dark&style=1&locale=es&toolbar_bg=%23000&studies=Volume%40tv-basicstudies%2CMASD%40tv-basicstudies', '_blank')">Abrir Chart Perpetual BTC (volume + MA + timeframe)</button>
+    <button onclick="window.open('https://www.tradingview.com/chart/?symbol=BINANCE:BTCUSDT.P&interval=60&theme=dark&style=1&locale=es&toolbar_bg=%23000', '_blank')">Abrir Chart Perpetual BTC (volume + MA + timeframe)</button>
   </div>
 
   <!-- Cheat Sheet institucional inspiration static zoomable -->
@@ -133,7 +133,7 @@
 
       statusDiv.textContent += ` | Fear & Greed: ${fng}`;
 
-      lpi = Math.max(0, Math.min(100, lpi));
+      lpi = math.max(0, math.min(100, lpi));
 
       gauge.data.datasets[0].data = [lpi, 100 - lpi];
       gauge.data.datasets[0].backgroundColor = lpi > 50 ? ['#00FF41', '#333'] : ['#FF0041', '#333'];
@@ -141,12 +141,12 @@
 
       const centerPlugin = gauge.config.plugins.find(p => p.id === 'centerText');
       if (centerPlugin) {
-        centerPlugin.text = `${Math.round(lpi)}`;
+        centerPlugin.text = `${math.round(lpi)}`;
         centerPlugin.subText = lpi > 70 ? 'COMPRA' : lpi < 30 ? 'VENTA' : 'Neutral';
       }
       gauge.update();
 
-      statusDiv.textContent += ` | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
+      statusDiv.textContent += ` | LPI: ${math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
 
       // Alertas visual COMPRA/VENTA grande
       if (lpi > 80) {
