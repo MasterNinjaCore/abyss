@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abyss</title>
+  <meta name="description" content="Liquidity Pressure Without Fear">
+  <!-- PWA manifest link (crearemos después) -->
+  <link rel="manifest" href="manifest.json">
+  <!-- Iconos PWA simple -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000000'/><circle cx='50' cy='50' r='30' fill='%2300FF41'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000000'/></svg>">
+  <style>
+    body { margin:0; padding:0; height:100vh; background:#000; color:#FFF; font-family: system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    h1 { font-size: 3.5rem; margin:0; font-weight:900; letter-spacing:2px; }
+    h2 { font-size: 1.2rem; margin:10px 0 40px; color:#888; font-weight:400; }
+    canvas { max-width:90%; max-height:50vh; }
+    footer { position:fixed; bottom:10px; font-size:0.8rem; color:#444; }
+  </style>
+  <!-- Chart.js CDN para gauge elegante -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Abyss</h1>
+  <h2>Liquidity Pressure Index</h2>
+  <canvas id="lpiGauge"></canvas>
+  <footer>Pressure Without Fear</footer>
+
+  <script>
+    const ctx = document.getElementById('lpiGauge').getContext('2d');
+    const gauge = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [50, 50], // dummy 50/100
+          backgroundColor: ['#00FF41', '#333333'],
+          borderWidth: 0,
+          cutout: '80%',
+          circumference: 360,
+          rotation: -180
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      },
+      plugins: [{
+        id: 'centerText',
+        afterDatasetsDraw(chart) {
+          const { width, height, ctx } = chart;
+          ctx.save();
+          ctx.font = 'bold 4rem system-ui';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('50', width / 2, height / 2);
+          ctx.font = '1rem system-ui';
+          ctx.fillStyle = '#888';
+          ctx.fillText('Neutral', width / 2, height / 2 + 40);
+          ctx.restore();
+        }
+      }]
+    });
+  </script>
+</body>
+</html>
