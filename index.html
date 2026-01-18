@@ -47,6 +47,27 @@
       }
 
       lpi = Math.max(0, Math.min(100, lpi));
+            // Dominancia BTC real (CoinGecko pública no key)
+      try {
+        const globalResp = await fetch('https://api.coingecko.com/api/v3/global');
+        const globalJson = await globalResp.json();
+        const btcDominance = globalJson.data.market_cap_percentage.btc;
+
+        // Necesitamos cambio 24h — fallback simple (CoinGecko no da directo, usamos approx o static bonus si >60%)
+        // Para precisión, bonus si dominance >60% (safety rotation)
+        let domPoints = 0;
+        if (btcDominance > 60) {
+          domPoints = 10;
+        } else if (btcDominance < 50) {
+          domPoints = -10;
+        }
+
+        lpi += domPoints;
+
+        statusDiv.textContent += ` | BTC Dominance: ${btcDominance.toFixed(1)}%`;
+      } catch (e) {
+        statusDiv.textContent += ' | Dominance: Sin datos';
+      }
 
             // Flujos ETF spot reales (CoinGlass pública)
       try {
