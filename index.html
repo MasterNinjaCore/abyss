@@ -9,13 +9,13 @@
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000000'/><circle cx='50' cy='50' r='30' fill='%2300FF41'/></svg>">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000000'/></svg>">
   <style>
-    body { margin:0; padding:0; height:100vh; background:#000; color:#FFF; font-family: system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-    h1 { font-size: 3.5rem; margin:0; font-weight:900; letter-spacing:2px; }
+    body { margin:0; padding:0; height:100vh; background:#000; color:#FFF; font-family: system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; text-align:center; }
+    h1 { font-size: 3.5rem; margin:20px 0 0; font-weight:900; letter-spacing:2px; }
     h2 { font-size: 1.2rem; margin:10px 0 40px; color:#888; font-weight:400; }
     canvas { max-width:90%; max-height:50vh; }
-    button { margin-top:40px; padding:15px 30px; font-size:1.2rem; background:#222; color:#FFF; border:2px solid #444; border-radius:12px; cursor:pointer; }
-    #status { color:#888; margin:20px; font-size:1rem; }
-    footer { position:fixed; bottom:10px; font-size:0.8rem; color:#444; }
+    button { margin:40px 0; padding:15px 30px; font-size:1.2rem; background:#222; color:#FFF; border:2px solid #444; border-radius:12px; cursor:pointer; }
+    #status { color:#888; margin:20px; font-size:1rem; white-space: pre-wrap; }
+    footer { position:fixed; bottom:10px; font-size:0.8rem; color:#444; width:100%; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -23,16 +23,14 @@
   <h1>Abyss</h1>
   <h2>Liquidity Pressure Index</h2>
   <canvas id="lpiGauge"></canvas>
-  <div style="margin-top:60px; width:100%; height:400px; background:#111; border-radius:12px; overflow:hidden; box-shadow:0 0 20px rgba(0,255,65,0.1);">
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script type="text/javascript">
-  new TradingView.widget({
-<div style="margin-top:60px; width:100%; height:500px; background:#111; border-radius:12px; overflow:hidden; box-shadow:0 0 20px rgba(0,255,65,0.1);">
-  <iframe src="https://www.tradingview.com/chart/?symbol=BINANCE:BTCUSDT.P&interval=60&theme=dark&style=1&locale=es&toolbar_bg=%23000&studies=Volume%40tv-basicstudies%2CMASD%40tv-basicstudies" frameborder="0" allow="fullscreen" style="width:100%; height:100%;"></iframe>
-</div>
-</div>
   <button id="refreshBtn">Actualizar Presión</button>
   <div id="status"></div>
+
+  <!-- Chart TradingView perpetual dark reliable iframe -->
+  <div style="margin-top:60px; width:100%; height:500px; background:#111; border-radius:12px; overflow:hidden; box-shadow:0 0 20px rgba(0,255,65,0.1);">
+    <iframe src="https://www.tradingview.com/chart/?symbol=BINANCE:BTCUSDT.P&interval=60&theme=dark&style=1&locale=es&toolbar_bg=%23000&studies=Volume%40tv-basicstudies%2CMASD%40tv-basicstudies" frameborder="0" allow="fullscreen" style="width:100%; height:100%;"></iframe>
+  </div>
+
   <footer>Pressure Without Fear</footer>
 
   <script>
@@ -72,7 +70,7 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const statusDiv = document.getElementById('status');
 
-    refreshBtn.addEventListener('click', async () => {
+    async function updateLPI() {
       statusDiv.textContent = 'Buscando presión real del mercado...';
 
       let lpi = 50;
@@ -139,11 +137,15 @@
       gauge.update();
 
       statusDiv.textContent += ` | LPI: ${Math.round(lpi)} | ${new Date().toLocaleTimeString()}`;
-        // Auto update every 5 min
-  setInterval(() => {
-    refreshBtn.click();
-  }, 300000); // 5 minutos = 300000 ms
-    });
+    }
+
+    refreshBtn.addEventListener('click', updateLPI);
+
+    // Auto update every 5 min (app abierta)
+    setInterval(updateLPI, 300000); // 5 minutos
+
+    // Update inicial al load
+    updateLPI();
   </script>
 </body>
 </html>
